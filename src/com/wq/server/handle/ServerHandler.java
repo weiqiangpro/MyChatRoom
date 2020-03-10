@@ -25,26 +25,22 @@ public class ServerHandler {
         this.client = client;
 
         connector = new Connector() {
-            @Override
-            public void onChannelClosed(SocketChannel channel) {
-                super.onChannelClosed(channel);
-                try {
-                    close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+//            @Override
+//            public void onChannelClosed(SocketChannel channel) {
+//                super.onChannelClosed(channel);
+//                try {
+//                    close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
             @Override
             protected void onReceiveNewMessage(String str) {
                 super.onReceiveNewMessage(str);
                 callBack.onArriveMes(ServerHandler.this,str);
             }
         };
-
         connector.setup(client);
-
-            //写选择器
             Selector writeSelector = Selector.open();
             client.register(writeSelector, SelectionKey.OP_WRITE);
 
@@ -71,15 +67,10 @@ public class ServerHandler {
     }
 
     public void exit() {
-        //readHandler.exit();
         writeHandler.exit();
         CloseUtil.close(client);
         callBack.onCloseSelf(ServerHandler.this);
-        try {
-            System.out.println("客户端已退出：" + client.getLocalAddress());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println( this.info+" 已退出");
     }
 
     public interface CallBack {
@@ -109,38 +100,23 @@ public class ServerHandler {
 
         void send(String str) {
             executorService.execute(() -> {
+                if (ServerHandler.this.done)
+                    return;
                 try {
-
-                    while (!done){
-
-                        if (selector.select() == 0){
-                            if (done)
-                                break;
-                            continue;
-                        }
-
-                        Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-                        while (iterator.hasNext()){
-                            if (done)
-                                break;
-                            SelectionKey next = iterator.next();
-                            if (next.isWritable()){
-                                SocketChannel channel = (SocketChannel) next.channel();
-                                byteBuffer.clear();
-                                byteBuffer.put((str+"\n").getBytes());
-                                byteBuffer.flip();
-
-                                int write = channel.write(byteBuffer);
-                                if (write<0){
-                                    System.out.println("客户端已无法发送数据！");
-                                    ServerHandler.this.exit();
-                                    break;
-                                }
-                            }
+                    byteBuffer.clear();
+                    byteBuffer.put((str+"\n").getBytes());
+                    byteBuffer.flip();
+                    while (!done && byteBuffer.hasRemaining()){
+                        int write = client.write(byteBuffer);
+                        if (write<0){
+                            System.out.println("客户端已无法发送数据！");
+                            ServerHandler.this.exit();
+                            break;
                         }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("远程主机强迫关闭了一个现有的连接");
+                    ServerHandler.this.exit();
                 }
 
             });

@@ -1,7 +1,7 @@
 package com.wq.server;
 
 import com.wq.linck.Context;
-import com.wq.linck.impl.Provider;
+import com.wq.linck.core.impl.MyProvider;
 import com.wq.utils.util.TCPConstants;
 
 import java.io.BufferedReader;
@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 
 public class Server {
     public static void main(String[] args) throws IOException {
-        Context.setup(new Provider());
+        Context.setup(new MyProvider());
 
         TcpServer tcpServer = new TcpServer();
         boolean start = tcpServer.start(TCPConstants.PORT_SERVER);
@@ -27,6 +27,6 @@ public class Server {
         } while (!"00bye00".equalsIgnoreCase(str));
         UdpServer.stop();
         tcpServer.stop();
-
+        Context.close();
     }
 }

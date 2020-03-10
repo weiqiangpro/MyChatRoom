@@ -1,6 +1,8 @@
 package com.wq.linck;
 
 
+import com.wq.linck.core.IoProvider;
+
 import java.io.IOException;
 
 /**
@@ -37,5 +39,4 @@ public class Context {
     private void callClose() throws IOException {
         ioProvider.close();
     }
-
 }

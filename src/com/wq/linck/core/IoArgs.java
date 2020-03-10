@@ -1,4 +1,4 @@
-package com.wq.linck;
+package com.wq.linck.core;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,9 +26,9 @@ public class IoArgs {
         return new String(bytes, 0, byteBuffer.position() - 1);
     }
 
-    public interface IoArgsEventListener {
-        void onStarted(IoArgs args);
-
-        void onCompleted(IoArgs args);
-    }
+//    public interface IoArgsEventListener {
+//        void onStarted(IoArgs args);
+//
+//        void onCompleted(IoArgs args);
+//    }
 }
