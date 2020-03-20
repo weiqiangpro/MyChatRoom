@@ -1,12 +1,14 @@
 package com.wq.linck.callback;
 
-public abstract class ReadCallBack implements Runnable {
+import java.util.concurrent.Callable;
+
+public abstract class ReadCallBack implements Callable {
 
     @Override
-    public void run() {
-        canProviderInput();
+    public String call() {
+        return canProviderInput();
     }
 
-    protected abstract void canProviderInput();
+    protected abstract String canProviderInput();
 }
 

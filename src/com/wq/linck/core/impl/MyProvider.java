@@ -1,9 +1,7 @@
 package com.wq.linck.core.impl;
 
-import com.wq.linck.callback.OnArrivedAndReadNext;
-import com.wq.linck.callback.ReadCallBack;
+import com.wq.linck.callback.WriteCallBack;
 import com.wq.linck.core.IoProvider;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -11,22 +9,20 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MyProvider implements IoProvider, Closeable {
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
-    private final AtomicBoolean inRegIn = new AtomicBoolean(false);
-
+    private final AtomicBoolean inReg = new AtomicBoolean(false);
     private final Selector readSelector;
-
-    private final HashMap<SelectionKey, Runnable> inputHashMap = new HashMap<>();
-
+    private final HashMap<SelectionKey, SocketChannelAdapter> inputHashMap = new HashMap<>();
     private final ExecutorService inputHandel = Executors.newFixedThreadPool(4);
+    private final ExecutorService outputHandel = Executors.newFixedThreadPool(4);
 
     public MyProvider() throws IOException {
         this.readSelector = Selector.open();
@@ -38,27 +34,27 @@ public class MyProvider implements IoProvider, Closeable {
             while (!isClosed.get()){
                 try {
                     if (readSelector.select() == 0) {
-                        waitSelection(inRegIn);
+                        waitSelection(inReg);
                         continue;
                     }
-
                     Set<SelectionKey> selectionKeys = readSelector.selectedKeys();
                     for (SelectionKey selectionKey : selectionKeys) {
 
-                        if (selectionKey.isValid()) {
+                        if (selectionKey.isReadable()) {
                             selectionKey.interestOps(selectionKey.readyOps() & ~SelectionKey.OP_READ);
-                            Runnable runnable = null;
+                            Callable callable = null;
                             try {
-                                runnable = inputHashMap.get(selectionKey);
+                                callable = inputHashMap.get(selectionKey).readCallBack;
                             } catch (Exception ignored) { }
-                            if (runnable != null && !inputHandel.isShutdown()) {
+                            if (callable != null && !inputHandel.isShutdown()) {
                                 // 异步调度
-                                inputHandel.execute(runnable);
+                                Future submit = inputHandel.submit(callable);
+                                send(selectionKey, (String) submit.get());
                             }
                         }
                     }
                     selectionKeys.clear();
-                } catch (IOException e) {
+                } catch (IOException | InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                 }
             }
@@ -68,46 +64,50 @@ public class MyProvider implements IoProvider, Closeable {
     }
 
     @Override
-    public boolean registerInput(SocketChannel channel, ReadCallBack callback) {
+    public void send(SelectionKey selectionKey, String str) {
+        waitSelection(inReg);
+        Iterator<Map.Entry<SelectionKey, SocketChannelAdapter>> iterator = inputHashMap.entrySet().iterator();
+            while (iterator.hasNext()){
+                Map.Entry<SelectionKey, SocketChannelAdapter> next = iterator.next();
+                if (next.getKey().equals(selectionKey)) {
+                    continue;
+                }
+                WriteCallBack value = (WriteCallBack) next.getValue().writeCallBack;
+                value.setIoArgs(str);
+                outputHandel.execute(value);
+            }
+    }
 
-        synchronized (inRegIn) {
-            // 设置锁定状态
-            inRegIn.set(true);
-
+    @Override
+    public boolean register(SocketChannel channel, SocketChannelAdapter socketChannelAdapter) {
+        synchronized (inReg) {
+            inReg.set(true);
             try {
-                // 唤醒当前的selector，让selector不处于select()状态
                 readSelector.wakeup();
-
                 SelectionKey key = null;
                 if (channel.isRegistered()) {
-                    // 查询是否已经注册过
                     key = channel.keyFor(readSelector);
-                    if (key != null) {
-                        key.interestOps(key.readyOps() | SelectionKey.OP_READ);
-                    }
+                    if (key != null)
+                        key.interestOps(key.readyOps() | SelectionKey.OP_READ );
                 }
-
                 if (key == null) {
-                    // 注册selector得到Key
                     key = channel.register(readSelector, SelectionKey.OP_READ);
-                    // 注册回调
-                    inputHashMap.put(key, callback);
+                    inputHashMap.put(key, socketChannelAdapter);
                 }
-
-                return true;
+                return key!=null;
             } catch (ClosedChannelException e) {
                 return false;
             } finally {
-                // 解除锁定状态
-                inRegIn.set(false);
+                inReg.set(false);
                 try {
-                    // 通知
-                    inRegIn.notify();
+                    inReg.notify();
                 } catch (Exception ignored) {
                 }
             }
         }
     }
+
+
     private static void waitSelection(final AtomicBoolean locker) {
         synchronized (locker) {
             if (locker.get()) {
@@ -120,7 +120,7 @@ public class MyProvider implements IoProvider, Closeable {
         }
     }
     @Override
-    public void unRegisterInput(SocketChannel channel) {
+    public void unRegister(SocketChannel channel) {
         if (channel.isRegistered()) {
             SelectionKey key = channel.keyFor(readSelector);
             if (key != null) {

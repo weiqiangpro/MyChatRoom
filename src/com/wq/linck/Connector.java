@@ -2,7 +2,7 @@ package com.wq.linck;
 
 import com.wq.linck.callback.OnArrivedAndReadNext;
 import com.wq.linck.core.IoArgs;
-import com.wq.linck.core.Receiver;
+import com.wq.linck.core.Resign;
 import com.wq.linck.core.impl.SocketChannelAdapter;
 
 import java.io.Closeable;
@@ -17,17 +17,19 @@ import java.util.UUID;
 public class Connector implements Closeable {
     private UUID key = UUID.randomUUID();
     private SocketChannel channel;
-    private Receiver receiver;
+    private Resign receiver;
 
     public void setup(SocketChannel socketChannel) throws IOException {
         this.channel = socketChannel;
         Context context = Context.get();
         SocketChannelAdapter adapter = new SocketChannelAdapter(channel, context.getIoProvider());
         this.receiver = adapter;
+      //  adapter.sendAsync();
         readNextMessage();
     }
 
     private void readNextMessage() {
+        System.out.println("readNext");
         if (receiver != null) {
             try {
                 receiver.receiveAsync(onArrivedAndReadNext);
@@ -47,7 +49,7 @@ public class Connector implements Closeable {
     };
 
     protected void onReceiveNewMessage(String str) {
-        //  System.out.println(key.toString() + ":" + str);
+         System.out.println(key.toString() + ":" + str);
     }
 
     @Override

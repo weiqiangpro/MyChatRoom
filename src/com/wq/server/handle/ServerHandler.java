@@ -37,7 +37,7 @@ public class ServerHandler {
             @Override
             protected void onReceiveNewMessage(String str) {
                 super.onReceiveNewMessage(str);
-                callBack.onArriveMes(ServerHandler.this,str);
+                //callBack.onArriveMes(ServerHandler.this,str);
             }
         };
         connector.setup(client);
@@ -75,7 +75,6 @@ public class ServerHandler {
 
     public interface CallBack {
         void onArriveMes(ServerHandler serverHandler, String mes);
-
         void onCloseSelf(ServerHandler serverHandler);
     }
 
