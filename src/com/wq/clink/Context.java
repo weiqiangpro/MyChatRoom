@@ -1,7 +1,7 @@
-package com.wq.linck;
+package com.wq.clink;
 
 
-import com.wq.linck.core.IoProvider;
+import com.wq.clink.core.IoProvider;
 
 import java.io.IOException;
 

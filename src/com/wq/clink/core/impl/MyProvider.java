@@ -1,7 +1,7 @@
-package com.wq.linck.core.impl;
+package com.wq.clink.core.impl;
 
-import com.wq.linck.callback.WriteCallBack;
-import com.wq.linck.core.IoProvider;
+import com.wq.clink.callback.WriteCallBack;
+import com.wq.clink.core.IoProvider;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -19,14 +19,19 @@ public class MyProvider implements IoProvider, Closeable {
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean inReg = new AtomicBoolean(false);
+    private final AtomicBoolean outReg = new AtomicBoolean(false);
     private final Selector readSelector;
-    private final HashMap<SelectionKey, SocketChannelAdapter> inputHashMap = new HashMap<>();
+    private final Selector writeSelector;
+    private final HashMap<SelectionKey, Runnable> inputHashMap = new HashMap<>();
+    private final HashMap<SelectionKey, Runnable> outputHashMap = new HashMap<>();
     private final ExecutorService inputHandel = Executors.newFixedThreadPool(4);
     private final ExecutorService outputHandel = Executors.newFixedThreadPool(4);
 
     public MyProvider() throws IOException {
         this.readSelector = Selector.open();
+        this.writeSelector = Selector.open();
         startRead();
+        startWrite();
     }
 
     private void startRead() {
@@ -42,19 +47,38 @@ public class MyProvider implements IoProvider, Closeable {
 
                         if (selectionKey.isReadable()) {
                             selectionKey.interestOps(selectionKey.readyOps() & ~SelectionKey.OP_READ);
-                            Callable callable = null;
-                            try {
-                                callable = inputHashMap.get(selectionKey).readCallBack;
-                            } catch (Exception ignored) { }
-                            if (callable != null && !inputHandel.isShutdown()) {
-                                // 异步调度
-                                Future submit = inputHandel.submit(callable);
-                                send(selectionKey, (String) submit.get());
-                            }
+                            inputHandel.execute(inputHashMap.get(selectionKey));
                         }
                     }
                     selectionKeys.clear();
-                } catch (IOException | InterruptedException | ExecutionException e) {
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "Clink IoSelectorProvider ReadSelector Thread");
+        thread.setPriority(Thread.MAX_PRIORITY);
+        thread.start();
+    }
+
+
+    private void startWrite() {
+        Thread thread = new Thread(() -> {
+            while (!isClosed.get()){
+                try {
+                    if (writeSelector.select() == 0) {
+                        waitSelection(outReg);
+                        continue;
+                    }
+                    Set<SelectionKey> selectionKeys = writeSelector.selectedKeys();
+                    for (SelectionKey selectionKey : selectionKeys) {
+
+                        if (selectionKey.isValid()) {
+                            selectionKey.interestOps(selectionKey.readyOps() & ~SelectionKey.OP_WRITE);
+                            outputHandel.execute(outputHashMap.get(selectionKey));
+                        }
+                    }
+                    selectionKeys.clear();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -64,49 +88,41 @@ public class MyProvider implements IoProvider, Closeable {
     }
 
     @Override
-    public void send(SelectionKey selectionKey, String str) {
-        waitSelection(inReg);
-        Iterator<Map.Entry<SelectionKey, SocketChannelAdapter>> iterator = inputHashMap.entrySet().iterator();
-            while (iterator.hasNext()){
-                Map.Entry<SelectionKey, SocketChannelAdapter> next = iterator.next();
-                if (next.getKey().equals(selectionKey)) {
-                    continue;
-                }
-                WriteCallBack value = (WriteCallBack) next.getValue().writeCallBack;
-                value.setIoArgs(str);
-                outputHandel.execute(value);
-            }
+    public boolean writeRegister(SocketChannel channel, Runnable runnable) {
+        return resign(channel,runnable,outReg,writeSelector,outputHashMap,SelectionKey.OP_WRITE);
+    }
+    @Override
+    public boolean readRegister(SocketChannel channel, Runnable runnable) {
+        return resign(channel,runnable,inReg,readSelector,inputHashMap,SelectionKey.OP_READ);
     }
 
-    @Override
-    public boolean register(SocketChannel channel, SocketChannelAdapter socketChannelAdapter) {
-        synchronized (inReg) {
-            inReg.set(true);
+    private boolean resign(SocketChannel channel,Runnable runnable,AtomicBoolean lock,Selector selector,HashMap hashMap,int op){
+        synchronized (lock) {
+            lock.set(true);
             try {
-                readSelector.wakeup();
+                selector.wakeup();
                 SelectionKey key = null;
                 if (channel.isRegistered()) {
-                    key = channel.keyFor(readSelector);
+                    key = channel.keyFor(selector);
                     if (key != null)
-                        key.interestOps(key.readyOps() | SelectionKey.OP_READ );
+                        key.interestOps(key.readyOps() | op );
                 }
                 if (key == null) {
-                    key = channel.register(readSelector, SelectionKey.OP_READ);
-                    inputHashMap.put(key, socketChannelAdapter);
+                    key = channel.register(selector, op);
+                    hashMap.put(key, runnable);
                 }
                 return key!=null;
             } catch (ClosedChannelException e) {
                 return false;
             } finally {
-                inReg.set(false);
+                lock.set(false);
                 try {
-                    inReg.notify();
+                    lock.notify();
                 } catch (Exception ignored) {
                 }
             }
         }
     }
-
 
     private static void waitSelection(final AtomicBoolean locker) {
         synchronized (locker) {
@@ -120,7 +136,7 @@ public class MyProvider implements IoProvider, Closeable {
         }
     }
     @Override
-    public void unRegister(SocketChannel channel) {
+    public void unReadRegister(SocketChannel channel) {
         if (channel.isRegistered()) {
             SelectionKey key = channel.keyFor(readSelector);
             if (key != null) {
@@ -128,6 +144,19 @@ public class MyProvider implements IoProvider, Closeable {
                 key.cancel();
                 inputHashMap.remove(key);
                 readSelector.wakeup();
+            }
+        }
+    }
+
+    @Override
+    public void unWriteRegister(SocketChannel channel) {
+        if (channel.isRegistered()) {
+            SelectionKey key = channel.keyFor(writeSelector);
+            if (key != null) {
+                // 取消监听的方法
+                key.cancel();
+                outputHashMap.remove(key);
+                writeSelector.wakeup();
             }
         }
     }

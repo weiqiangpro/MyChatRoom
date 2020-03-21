@@ -33,6 +33,7 @@ public class TcpServer implements ServerHandler.CallBack {
             serverListener = new ServerListener(selector);
             serverListener.start();
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("端口号被占用");
             return false;
         }
@@ -61,7 +62,6 @@ public class TcpServer implements ServerHandler.CallBack {
     public void onArriveMes(ServerHandler serverHandler, String mes) {
 
         System.out.println(serverHandler.getInfo() + mes);
-
         executorService.execute(() -> {
             synchronized (TcpServer.this) {
                 for (ServerHandler server : serverHandlerList) {

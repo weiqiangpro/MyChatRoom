@@ -1,7 +1,9 @@
-package com.wq.server;
+package cloud;
 
 import com.wq.clink.Context;
 import com.wq.clink.core.impl.MyProvider;
+import com.wq.server.TcpServer;
+import com.wq.server.UdpServer;
 import com.wq.utils.util.TCPConstants;
 
 import java.io.BufferedReader;
@@ -13,7 +15,7 @@ public class Server {
         Context.setup(new MyProvider());
 
         TcpServer tcpServer = new TcpServer();
-        boolean start = tcpServer.start(TCPConstants.PORT_SERVER);
+        boolean start = tcpServer.start(8888);
         if (!start){
             System.out.println("TCP服务器启动失败");
             return;

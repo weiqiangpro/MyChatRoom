@@ -1,9 +1,13 @@
-package com.wq.linck;
+package com.wq.clink;
 
-import com.wq.linck.callback.OnArrivedAndReadNext;
-import com.wq.linck.core.IoArgs;
-import com.wq.linck.core.Resign;
-import com.wq.linck.core.impl.SocketChannelAdapter;
+import com.wq.clink.callback.OnArrivedAndReadNext;
+import com.wq.clink.core.IoArgs;
+import com.wq.clink.core.Receiver;
+import com.wq.clink.core.impl.SocketChannelAdapter;
+import com.wq.clink.dispather.ReceiveDispather;
+import com.wq.clink.dispather.SendDispather;
+import com.wq.clink.dispather.box.StringReceivePacket;
+import com.wq.clink.dispather.box.StringSendPacket;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -17,35 +21,29 @@ import java.util.UUID;
 public class Connector implements Closeable {
     private UUID key = UUID.randomUUID();
     private SocketChannel channel;
-    private Resign receiver;
-
+    private Receiver receiver;
+    private SendDispather sendDispather;
     public void setup(SocketChannel socketChannel) throws IOException {
         this.channel = socketChannel;
         Context context = Context.get();
         SocketChannelAdapter adapter = new SocketChannelAdapter(channel, context.getIoProvider());
-        this.receiver = adapter;
-      //  adapter.sendAsync();
-        readNextMessage();
+        this.sendDispather = new SendDispather(adapter);
+        new ReceiveDispather(adapter,onArrivedAndReadNext).start();
+
     }
 
-    private void readNextMessage() {
-        System.out.println("readNext");
-        if (receiver != null) {
-            try {
-                receiver.receiveAsync(onArrivedAndReadNext);
-            } catch (IOException e) {
-                System.out.println("开始接收数据异常：" + e.getMessage());
-            }
-        }
+    public void send(String str){
+        StringSendPacket stringSendPacket = new StringSendPacket(str);
+        sendDispather.send(stringSendPacket);
     }
+
 
     private final OnArrivedAndReadNext onArrivedAndReadNext = new OnArrivedAndReadNext() {
 
         @Override
-        public void onCompleted(IoArgs args) {
-            onReceiveNewMessage(args.bufferString());
-            readNextMessage();
-        }
+        public void onCompleted(StringReceivePacket packet) {
+            onReceiveNewMessage(packet.string());
+}
     };
 
     protected void onReceiveNewMessage(String str) {
