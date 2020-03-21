@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class Client2 {
+public class Client {
     public static void main(String[] args) throws IOException {
         Context.setup(new MyProvider());
 //        ServerInfo info = UDPSearcher.searchServer(10000);

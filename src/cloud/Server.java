@@ -26,7 +26,6 @@ public class Server {
         do {
             str = bufferedReader.readLine();
             tcpServer.send(str);
-            //Context.get().getIoProvider().send(null,str);
         } while (!"00bye00".equalsIgnoreCase(str));
         UdpServer.stop();
         tcpServer.stop();

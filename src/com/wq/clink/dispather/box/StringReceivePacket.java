@@ -2,6 +2,7 @@ package com.wq.clink.dispather.box;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public class StringReceivePacket implements Closeable {
 
@@ -18,7 +19,13 @@ public class StringReceivePacket implements Closeable {
         positon += count;
     }
     public String string(){
-        return new String(buffer);
+        String str = null;
+        try {
+             str = new String(buffer,"utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return  str;
     }
 
     @Override

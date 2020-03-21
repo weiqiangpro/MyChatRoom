@@ -18,13 +18,12 @@ public class Server {
             System.out.println("TCP服务器启动失败");
             return;
         }
-//        UdpServer.start(TCPConstants.PORT_SERVER);
+        UdpServer.start(TCPConstants.PORT_SERVER);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
         String str;
         do {
             str = bufferedReader.readLine();
             tcpServer.send(str);
-            //Context.get().getIoProvider().send(null,str);
         } while (!"00bye00".equalsIgnoreCase(str));
         UdpServer.stop();
         tcpServer.stop();

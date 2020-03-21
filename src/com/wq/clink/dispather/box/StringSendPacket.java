@@ -2,15 +2,21 @@ package com.wq.clink.dispather.box;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public class StringSendPacket implements Closeable {
 
-    private final byte[] bytes;
-    private final int length;
+    private byte[] bytes;
+    private int length;
 
     public StringSendPacket(String msg) {
-        this.bytes = msg.getBytes();
-        this.length = bytes.length;
+        try {
+            this.bytes = msg.getBytes("utf-8");
+            this.length = bytes.length;
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public int getLength(){
