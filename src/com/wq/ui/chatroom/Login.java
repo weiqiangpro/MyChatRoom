@@ -1,7 +1,5 @@
 package com.wq.ui.chatroom;
 
-import com.wq.ui.MyLable.ButtonJLabel;
-import com.wq.ui.MyLable.EnterAndExitLabel;
 import com.wq.ui.utils.Constant;
 
 import javax.swing.*;

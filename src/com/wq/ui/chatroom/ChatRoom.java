@@ -1,129 +1,231 @@
 package com.wq.ui.chatroom;
 
+import com.wq.ui.label.UserLabels;
+import com.wq.ui.utils.Constant;
+
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.Point;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import com.wq.ui.MyLable.ButtonJLabel;
-import com.wq.ui.MyLable.UserJLabel;
-import javax.swing.JSplitPane;
+import javax.swing.border.LineBorder;
 import javax.swing.JLabel;
-import javax.swing.JTextArea;
-import javax.swing.JTextPane;
 import javax.swing.JScrollPane;
-import java.awt.event.MouseAdapter;
+import javax.swing.JTextArea;
 import java.awt.event.MouseEvent;
+import javax.swing.ScrollPaneConstants;
+import java.awt.event.MouseAdapter;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.WeakReference;
 
 public class ChatRoom extends JFrame {
 
-	private static final long serialVersionUID = 1L;
+    private JPanel contentPane;
+    public static final Color SIGN_BEFORE = new Color(0, 148, 230);
+    public static final Color USER = new Color(235, 235, 236);
+    private int x0, y0, x1, y1;
+    private JLabel lblX;
+    private JLabel lblNewLabel_2;
+
+    public static void main(String[] args) {
+
+        ChatRoom frame = new ChatRoom();
+        frame.setVisible(true);
+    }
+
+    public ChatRoom() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setBounds(100, 100, 747, 691);
+        contentPane = new JPanel();
+        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        setContentPane(contentPane);
+        contentPane.setLayout(null);
+        // ImageIcon icon=new ImageIcon("xxx/2.png"); //xxx代表图片存放路径，2.png图片名称及格式
+        // this.setIconImage(icon.getImage());
+        this.setTitle("致一聊天室");
+        setUndecorated(true);
+        JPanel panel = new JPanel();
+        panel.setBounds(0, 61, 131, 631);
+        contentPane.add(panel);
+        panel.setLayout(new BorderLayout(0, 0));
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setBorder(null);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel panel_5 = new JPanel();
+        panel_5.setBackground(new Color(250, 250, 250));
+        scrollPane.setViewportView(panel_5);
+        panel_5.setLayout(null);
+
+        UserLabels user_1 = new UserLabels(Constant.class.getResource("head_small.png"),0);
+        panel_5.add(user_1);
+
+        UserLabels user_2 = new UserLabels(Constant.class.getResource("head_small.png"),1);
+        panel_5.add(user_2);
+
+        JLabel title = new JLabel("  魏阿魏小强");
+        title.setFont(new Font("微软雅黑", Font.PLAIN, 17));
+        title.setOpaque(true);
+
+        title.setBackground(Color.WHITE);
+        title.setBorder(new LineBorder(Color.gray));
+        title.setBounds(130, 60, 631, 37);
+        contentPane.add(title);
+
+        JPanel panel_3 = new JPanel();
+        panel_3.setBounds(130, 565, 619, 95);
+        contentPane.add(panel_3);
+        panel_3.setLayout(new BorderLayout(0, 0));
+
+        JScrollPane scrollPane_2 = new JScrollPane();
+        scrollPane_2.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane_2.setBorder(null);
+        panel_3.add(scrollPane_2, BorderLayout.CENTER);
+
+        JTextArea textArea_1 = new JTextArea();
+        textArea_1.setLineWrap(true);
+        scrollPane_2.setViewportView(textArea_1);
+
+        JPanel panel_1 = new JPanel();
+
+        panel_1.setBounds(130, 95, 619, 441);
+        contentPane.add(panel_1);
+        panel_1.setLayout(new BorderLayout(0, 0));
+
+        JScrollPane scrollPane_1 = new JScrollPane();
+        scrollPane_1.setBorder(null);
+        panel_1.add(scrollPane_1, BorderLayout.CENTER);
+
+        JTextArea textArea = new JTextArea();
+        textArea.setWrapStyleWord(true);
+        textArea.setEnabled(false);
+        scrollPane_1.setViewportView(textArea);
+
+        JPanel panel_2 = new JPanel();
+        panel_2.setBorder(new LineBorder(Color.gray));
+        panel_2.setBackground(Color.WHITE);
+        panel_2.setBounds(130, 536, 620, 37);
+        contentPane.add(panel_2);
+        panel_2.setLayout(null);
+
+        JLabel lblNewLabel_1 = new JLabel("历史记录");
+        lblNewLabel_1.setOpaque(true);
+        lblNewLabel_1.setBackground(Color.WHITE);
+        lblNewLabel_1.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        lblNewLabel_1.setForeground(Color.gray);
+        lblNewLabel_1.setBounds(538, 7, 72, 17);
+        panel_2.add(lblNewLabel_1);
+
+        JPanel panel_4 = new JPanel();
+
+        panel_4.setBackground(Color.WHITE);
+        panel_4.setBounds(130, 659, 631, 31);
+        contentPane.add(panel_4);
+        panel_4.setLayout(null);
+
+        JLabel send = new JLabel("发送", JLabel.CENTER);
+        send.setOpaque(true);
+        send.setBackground(SIGN_BEFORE);
+        send.setFont(new Font("微软雅黑", Font.PLAIN, 13));
+        send.setForeground(Color.WHITE);
+        send.setBounds(540, 0, 64, 27);
+        panel_4.add(send);
+        ImageIcon img = new ImageIcon(Constant.class.getResource("bgc.jpg"));
+
+        lblNewLabel_2 = new JLabel("—");
+        lblNewLabel_2.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent arg0) {
+                ChatRoom.this.setExtendedState(JFrame.ICONIFIED);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // TODO Auto-generated method stub
+                ChatRoom.this.lblNewLabel_2.setFont(new Font("微软雅黑", Font.PLAIN, 23));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // TODO Auto-generated method stub
+                ChatRoom.this.lblNewLabel_2.setFont(new Font("微软雅黑", Font.PLAIN, 18));
+            }
+
+        });
+        lblNewLabel_2.setForeground(Color.WHITE);
+        lblNewLabel_2.setFont(new Font("微软雅黑", Font.BOLD, 18));
+        lblNewLabel_2.setBounds(678, 15, 27, 30);
+        contentPane.add(lblNewLabel_2);
+
+        lblX = new JLabel("x");
+        lblX.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent arg0) {
+                ChatRoom.this.dispose();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // TODO Auto-generated method stub
+                ChatRoom.this.lblX.setFont(new Font("微软雅黑", Font.PLAIN, 35));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // TODO Auto-generated method stub
+                ChatRoom.this.lblX.setFont(new Font("微软雅黑", Font.PLAIN, 31));
+            }
+
+        });
+        lblX.setForeground(Color.WHITE);
+        lblX.setFont(new Font("微软雅黑", Font.PLAIN, 31));
+        lblX.setBounds(714, 15, 27, 30);
+        contentPane.add(lblX);
+        ImageIcon head = new ImageIcon(Constant.class.getResource("head.png"));
+        JLabel lblNewLabel_3 = new JLabel(head);
+        lblNewLabel_3.setOpaque(true);
+        lblNewLabel_3.setBounds(36, 5, 48, 48);
+        contentPane.add(lblNewLabel_3);
+        JLabel lblNewLabel = new JLabel(img);
+        lblNewLabel.setOpaque(true);
+        lblNewLabel.setBounds(0, 0, 749, 63);
+        contentPane.add(lblNewLabel);
+        add_move_event(lblNewLabel);
+    }
+
+    private void add_move_event(JLabel jLabel) {
+        jLabel.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // TODO Auto-generated method stub
+                x0 = e.getXOnScreen();
+                y0 = e.getYOnScreen();
+            }
 
 
-	public static void main(String[] args) {
-		new ChatRoom().setVisible(true);
+        });
+        jLabel.addMouseMotionListener(new MouseAdapter() {
 
-	}
-
-	public ChatRoom() {
-		this.setTitle("致一聊天室");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 869, 670);
-		JPanel contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
-		contentPane.setLayout(new BorderLayout(0, 0));
-		JSplitPane splitPane = new JSplitPane();
-		splitPane.setResizeWeight(0.18);
-		splitPane.setDividerSize(0);
-		contentPane.add(splitPane, BorderLayout.CENTER);
-
-		JSplitPane splitPane_1 = new JSplitPane();
-		splitPane_1.setResizeWeight(0.8);
-		splitPane_1.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		splitPane_1.setDividerSize(0);
-		splitPane.setRightComponent(splitPane_1);
-
-		JSplitPane splitPane_2 = new JSplitPane();
-		splitPane_2.setResizeWeight(0.7);
-		splitPane_2.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		splitPane_1.setRightComponent(splitPane_2);
-		splitPane_2.setDividerSize(0);
-
-		JPanel panel_2 = new JPanel();
-		splitPane_2.setLeftComponent(panel_2);
-		panel_2.setLayout(new BorderLayout(0, 0));
-
-		JScrollPane scrollPane = new JScrollPane();
-		panel_2.add(scrollPane, BorderLayout.CENTER);
-
-		JTextPane textPane = new JTextPane();
-		scrollPane.setViewportView(textPane);
-
-		JPanel panel_3 = new JPanel();
-		splitPane_2.setRightComponent(panel_3);
-		panel_3.setLayout(null);
-
-		ButtonJLabel send = new ButtonJLabel("    发送");
-		send.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				System.out.println("发送");
-			}
-		});
-		send.setBounds(594, 0, 69, 34);
-		panel_3.add(send);
-		JSplitPane splitPane_3 = new JSplitPane();
-		splitPane_3.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		splitPane_3.setResizeWeight(0.93);
-		splitPane_1.setLeftComponent(splitPane_3);
-		splitPane_3.setDividerSize(0);
-		JPanel panel = new JPanel();
-		splitPane_3.setLeftComponent(panel);
-		panel.setLayout(new BorderLayout(0, 0));
-
-		JSplitPane splitPane_4 = new JSplitPane();
-		splitPane_4.setResizeWeight(0.03);
-		splitPane_4.setDividerSize(0);
-		splitPane_4.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		panel.add(splitPane_4, BorderLayout.CENTER);
-
-		JScrollPane scrollPane_1 = new JScrollPane();
-		splitPane_4.setRightComponent(scrollPane_1);
-
-		JTextArea txtrSdfdsfs = new JTextArea();
-		txtrSdfdsfs.setText("sdfdsfs");
-		txtrSdfdsfs.setEditable(false);
-		scrollPane_1.setViewportView(txtrSdfdsfs);
-
-		JLabel lblNewLabel_3 = new JLabel("New label");
-		splitPane_4.setLeftComponent(lblNewLabel_3);
-
-		JPanel panel_1 = new JPanel();
-		splitPane_3.setRightComponent(panel_1);
-		panel_1.setLayout(null);
-
-		ButtonJLabel	history = new ButtonJLabel("  历史纪录");
-		history.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				System.out.println("历史纪录");
-			}
-		});
-		history.setBounds(599, 0, 72, 33);
-		panel_1.add(history);
-
-		JPanel panel_4 = new JPanel();
-		splitPane.setLeftComponent(panel_4);
-		panel_4.setLayout(null);
-
-		UserJLabel lblNewLabel = new UserJLabel("群聊",0);
-		panel_4.add(lblNewLabel);
-		UserJLabel user_1 = new UserJLabel("用户一",1);
-		panel_4.add(user_1);
-		UserJLabel user_2 = new UserJLabel("用户二",2);
-		panel_4.add(user_2);
-		this.setResizable(false);
-	}
-	
-
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                // TODO Auto-generated method stub
+                x1 = e.getXOnScreen();
+                y1 = e.getYOnScreen();
+                if (x1 != x0 || y1 != y0) {
+                    Point p = ChatRoom.this.getLocation();
+                    double px = p.getX();
+                    double py = p.getY();
+                    ChatRoom.this.setLocation((int) (px + (x1 - x0)), (int) (py + (y1 - y0)));
+                    x0 = x1;
+                    y0 = y1;
+                }
+            }
+        });
+    }
 }
