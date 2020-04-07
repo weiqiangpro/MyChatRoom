@@ -68,8 +68,8 @@ e.printStackTrace();
 
 
     @Override
-    public ReceivePacket tackPacket(byte type, long length, byte[] headInfo) {
-        return onArrivedAndReadNext.onArrivedNewPacket(type,length);
+    public ReceivePacket tackPacket(byte type, long length, byte[] headInfo,String fileName) {
+        return onArrivedAndReadNext.onArrivedNewPacket(type,length,fileName);
     }
 
     @Override

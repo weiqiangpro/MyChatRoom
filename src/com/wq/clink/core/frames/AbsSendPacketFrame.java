@@ -11,11 +11,10 @@ import java.io.IOException;
  * Time: 2020/4/7 下午12:38
  */
 public abstract class AbsSendPacketFrame extends  AbsSendFrame {
-    protected volatile SendPacket<?> packet;
+
 
     public AbsSendPacketFrame(int len, byte type, byte flag, short indetifier,SendPacket packet) {
-        super(len, type, flag, indetifier);
-        this.packet = packet;
+        super(len, type, flag, indetifier,packet);
     }
 
     /**

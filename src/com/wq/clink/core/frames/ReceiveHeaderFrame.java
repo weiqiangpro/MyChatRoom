@@ -6,8 +6,9 @@ import com.wq.clink.core.IoArgs;
  * Author: weiqiang
  * Time: 2020/4/7 上午10:53
  */
-public class ReceiveHeaderFrame extends AbsReceiveFrame{
+public class ReceiveHeaderFrame extends AbsReceiveFrame {
     private final byte[] body;
+    public String fileName;
 
     ReceiveHeaderFrame(byte[] header) {
         super(header);
@@ -17,7 +18,11 @@ public class ReceiveHeaderFrame extends AbsReceiveFrame{
     @Override
     protected int consumBody(IoArgs args) {
         int offset = body.length - bodyRemaining;
-        return args.writeTo(body, offset);
+        int i = args.writeTo(body, offset);
+        byte[] names = new byte[body[6]];
+        args.writeTo(names, 0);
+        fileName = new String(names);
+        return i;
     }
 
     public long getPacketLength() {

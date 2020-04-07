@@ -8,11 +8,11 @@ import java.io.*;
 
 public class FileSendPacket extends SendPacket<FileInputStream> {
     private final File file;
-    private final String name;
-    public FileSendPacket(File file,String name) {
+
+    public FileSendPacket(File file, String name) {
         this.file = file;
         this.name = name;
-            this.length = file.length();
+        this.length = file.length();
     }
 
 

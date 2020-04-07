@@ -63,7 +63,8 @@ public class AsycPacketWriter implements Closeable {
                         ReceiveHeaderFrame headerFrame = (ReceiveHeaderFrame) currentFrame;
                         ReceivePacket packet = provider.tackPacket(headerFrame.getPacketType(),
                                 headerFrame.getPacketLength(),
-                                headerFrame.getPacketHeaderInfo());
+                                headerFrame.getPacketHeaderInfo(),
+                                headerFrame.fileName);
                         appendNewPacket(headerFrame.getBodyIndetifier(), packet);
                     } else if (currentFrame instanceof ReceiveEntityFrame) {
                         // Packet 实体帧消费完成，则将当前帧消费到Packet
@@ -195,7 +196,7 @@ public class AsycPacketWriter implements Closeable {
 
     interface PacketProvider {
 
-        ReceivePacket tackPacket(byte type,long length , byte[] headInfo);
+        ReceivePacket tackPacket(byte type,long length , byte[] headInfo,String fileName);
 
         void completePacket(ReceivePacket packet, boolean isSucceed);
     }

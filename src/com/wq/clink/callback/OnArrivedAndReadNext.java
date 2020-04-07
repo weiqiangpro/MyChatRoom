@@ -6,6 +6,6 @@ import com.wq.clink.dispather.box.abs.ReceivePacket;
 
 public interface  OnArrivedAndReadNext {
 
-     ReceivePacket<?,?> onArrivedNewPacket(byte type,long len);
+     ReceivePacket<?,?> onArrivedNewPacket(byte type,long len,String fileName);
      void onCompleted(ReceivePacket packet);
 }

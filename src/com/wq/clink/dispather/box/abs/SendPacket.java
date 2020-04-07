@@ -9,6 +9,7 @@ import java.io.InputStream;
  */
 public abstract class SendPacket<T extends InputStream> extends Packet<T> {
     private boolean isCanceled;
+    public   String name;
 
     public boolean isCanceled() {
         return isCanceled;

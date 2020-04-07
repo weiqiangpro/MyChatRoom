@@ -53,14 +53,14 @@ public abstract class Connector implements Closeable {
     private final OnArrivedAndReadNext onArrivedAndReadNext = new OnArrivedAndReadNext() {
 
         @Override
-        public ReceivePacket<?, ?> onArrivedNewPacket(byte type, long len) {
+        public ReceivePacket<?, ?> onArrivedNewPacket(byte type, long len,String fileName) {
             switch (type) {
                 case Packet.TYPE_MEMORY_BYTES:
                     return new ByteReceivePacket(len);
                 case Packet.TYPE_MEMORY_STRING:
                     return new StringReceivePacket(len);
                 case Packet.TYPE_STREAM_FILE:
-                    return new FileReceivePacket(len, createNewFile());
+                    return new FileReceivePacket(len, createNewFile(fileName));
                 case Packet.TYPE_STREAM_DIRECT:
                     return new ByteReceivePacket(len);
                 default:

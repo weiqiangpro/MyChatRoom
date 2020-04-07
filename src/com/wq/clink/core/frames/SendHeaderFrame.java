@@ -2,8 +2,10 @@ package com.wq.clink.core.frames;
 
 import com.wq.clink.core.Frame;
 import com.wq.clink.core.IoArgs;
+import com.wq.clink.dispather.box.abs.Packet;
 import com.wq.clink.dispather.box.abs.SendPacket;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
@@ -14,7 +16,7 @@ import java.nio.channels.ReadableByteChannel;
  * Time: 2020/4/7 上午10:53
  */
 public class SendHeaderFrame extends AbsSendPacketFrame {
-    static final int PACKET_HEADER_FRAME_MIN_LENGTH = 6;
+    static final int PACKET_HEADER_FRAME_MIN_LENGTH = 7;
     private final byte[] body;
 
     public SendHeaderFrame(short indetifier, SendPacket packet) {
@@ -23,12 +25,18 @@ public class SendHeaderFrame extends AbsSendPacketFrame {
         byte packetType = packet.type();
         byte[] packetHeaderInfo = packet.headInfo();
         this.body = new byte[bodyRemaining];
+
         body[0] = (byte) (packetLength >> 32);
         body[1] = (byte) (packetLength >> 24);
         body[2] = (byte) (packetLength >> 16);
         body[3] = (byte) (packetLength >> 8);
         body[4] = (byte) packetLength;
         body[5] = packetType;
+        if (body[5] == Packet.TYPE_STREAM_FILE){
+            name = packet.name.getBytes();
+            nameReamining =  body[6] = (byte) name.length;
+        }else
+            body[6]=0;
 
         if (packetHeaderInfo != null) {
             System.arraycopy(packetHeaderInfo, 0, body, PACKET_HEADER_FRAME_MIN_LENGTH, packetHeaderInfo.length);
