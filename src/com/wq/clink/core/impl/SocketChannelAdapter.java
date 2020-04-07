@@ -7,6 +7,7 @@ import com.wq.clink.core.IoProvider;
 import com.wq.clink.core.Receiver;
 import com.wq.clink.core.Sender;
 import com.wq.clink.dispather.dispathercal.IoArgsCallback;
+import com.wq.clink.dispather.dispathercal.IoArgsEventProcessor;
 import com.wq.utils.constants.CloseUtil;
 
 import java.io.Closeable;
@@ -19,8 +20,8 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final SocketChannel channel;
     private final IoProvider ioProvider;
-    private IoArgsCallback receiveDisCallback;
-    private IoArgsCallback sendDisCallback;
+    private IoArgsEventProcessor receiveDisCallback;
+    private IoArgsEventProcessor sendDisCallback;
     private IoArgs ioArgs;
     public SocketChannelAdapter(SocketChannel channel, IoProvider ioProvider) throws IOException {
         this.channel = channel;
@@ -29,23 +30,31 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
     }
 
     @Override
-    public boolean receiveAsync(IoArgs ioArgs, IoArgsCallback callBack) throws IOException {
+    public boolean receiveAsync() throws IOException {
         if (isClosed.get()) {
             throw new IOException("Current channel is closed!");
         }
-        this.readCallBack.setIoArgs(ioArgs);
-        this.receiveDisCallback = callBack;
+
         return ioProvider.readRegister(channel, readCallBack);
     }
 
     @Override
-    public boolean senderAsync(IoArgs ioArgs, IoArgsCallback callBack) throws IOException {
+    public void setReceiveProcessor(IoArgsEventProcessor callBack) {
+        this.receiveDisCallback = callBack;
+    }
+
+    @Override
+    public boolean senderAsync() throws IOException {
         if (isClosed.get()) {
             throw new IOException("Current channel is closed!");
         }
-        this.sendDisCallback = callBack;
-        writeCallBack.setIoArgs(ioArgs);
+
         return ioProvider.writeRegister(channel, writeCallBack);
+    }
+
+    @Override
+    public void setSendProcessor(IoArgsEventProcessor callBack) {
+        this.sendDisCallback = callBack;
     }
 
     public final ReadCallBack readCallBack = new ReadCallBack() {
@@ -54,16 +63,18 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
             if (isClosed.get()) {
                 return;
             }
-            IoArgs args = getIoArgs();
-            IoArgsCallback receiveDisCallback = SocketChannelAdapter.this.receiveDisCallback;
+            IoArgsEventProcessor processor = SocketChannelAdapter.this.receiveDisCallback;
+            IoArgs args = processor.provideIoArgs();
             try {
-                receiveDisCallback.onStart();
+                if (args == null){
+                    processor.onFiled(null,new Exception());
+                }
                 // 具体的读取操作
-                if (args.read(channel) > 0) {
+               else if (args.read(channel) > 0) {
                     // 读取完成回调
-                    receiveDisCallback.onCompleted();
+                    processor.onCompleted(args);
                 } else {
-                    throw new IOException("Cannot read any data!");
+                    processor.onFiled(args,new IOException("Cannot read any data!"));
                 }
             } catch (IOException ignored) {
                 CloseUtil.close(SocketChannelAdapter.this);
@@ -77,14 +88,15 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
             if (isClosed.get()) {
                 return;
             }
-            IoArgs args = getIoArgs();
+            IoArgsEventProcessor processor = SocketChannelAdapter.this.sendDisCallback;
+            IoArgs args = processor.provideIoArgs();
             try {
                 // 具体的读取操
                 if (args.write(channel) > 0) {
-                    SocketChannelAdapter.this.sendDisCallback.onCompleted();
+                    processor.onCompleted(args);
                     // 读取完成回调
                 } else {
-                    throw new IOException("Cannot write any data!");
+                    processor.onFiled(args,new IOException("Cannot write any data!"));
                 }
 
             } catch (IOException ignored) {

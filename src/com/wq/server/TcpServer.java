@@ -1,6 +1,8 @@
 package com.wq.server;
 
 import com.wq.server.handle.ServerHandler;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
@@ -14,12 +16,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TcpServer implements ServerHandler.CallBack {
+
+    private final File path;
     private ServerListener serverListener;
     private List<ServerHandler> serverHandlerList = new ArrayList<ServerHandler>();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private ServerSocketChannel serverSocketChannel = null;
 
-    public boolean start(int port) {
+    public TcpServer(File path) {
+        this.path = path;
+    }
+
+    public boolean start(int port ) {
         try {
             Selector selector = Selector.open();
 
@@ -108,7 +116,7 @@ public class TcpServer implements ServerHandler.CallBack {
                         if (next.isAcceptable()){
                             ServerSocketChannel serverSocketChannel = (ServerSocketChannel) next.channel();
                             SocketChannel socketChannel = serverSocketChannel.accept();
-                            ServerHandler clientHandler = new ServerHandler(socketChannel, TcpServer.this);
+                            ServerHandler clientHandler = new ServerHandler(socketChannel, TcpServer.this,path);
                             serverHandlerList.add(clientHandler);
                         }
                     }

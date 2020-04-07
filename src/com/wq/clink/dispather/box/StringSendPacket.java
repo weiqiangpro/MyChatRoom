@@ -1,34 +1,19 @@
 package com.wq.clink.dispather.box;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import com.wq.clink.dispather.box.abs.Packet;
+import com.wq.clink.dispather.box.abs.SendPacket;
 
-public class StringSendPacket implements Closeable {
+import java.io.*;
 
-    private byte[] bytes;
-    private int length;
+public class StringSendPacket extends ByteSendPacket {
 
-    public StringSendPacket(String msg) {
-        try {
-            this.bytes = msg.getBytes("utf-8");
-            this.length = bytes.length;
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+
+    public StringSendPacket(String msg)  {
+        super(msg.getBytes());
     }
 
-    public int getLength(){
-        return length;
-    }
-
-    public byte[] bytes() {
-        return bytes;
-    }
-
-    @Override
-    public void close() throws IOException {
-
+    public byte type(){
+        return TYPE_MEMORY_STRING;
     }
 }

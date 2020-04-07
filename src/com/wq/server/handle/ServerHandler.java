@@ -1,23 +1,23 @@
 package com.wq.server.handle;
 
 import com.wq.clink.Connector;
+import com.wq.clink.dispather.box.abs.Packet;
+import com.wq.clink.dispather.box.abs.ReceivePacket;
+import com.wq.utils.Foo;
 import com.wq.utils.constants.CloseUtil;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ServerHandler extends  Connector{
     private SocketChannel client;
     private boolean done = false;
     private String info;
     private CallBack callBack;
-
-    public ServerHandler(SocketChannel client, CallBack callBack) throws IOException {
+    private final File path;
+    public ServerHandler(SocketChannel client, CallBack callBack,File file) throws IOException {
+        this.path =file;
         this.callBack = callBack;
             this.info = "客户端：[" + client.getRemoteAddress().toString() + "]";
         setup(client);
@@ -33,10 +33,21 @@ public class ServerHandler extends  Connector{
     }
 
     @Override
-    protected void onReceiveNewMessage(String str) {
-        super.onReceiveNewMessage(str);
-        callBack.onArriveMes(this,str);
+    protected File createNewFile() {
+        return Foo.createRandomTemp(path);
     }
+
+    @Override
+    protected void onReceivePacket(ReceivePacket packet) {
+        super.onReceivePacket(packet);
+        if (packet.type() == Packet.TYPE_MEMORY_STRING){
+            String str = (String) packet.entity();
+            System.out.println(key.toString()+":"+str);
+            callBack.onArriveMes(this,str);
+        }
+    }
+
+
 
     public void exit() {
         CloseUtil.close(client);

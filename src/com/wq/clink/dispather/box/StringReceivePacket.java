@@ -1,35 +1,28 @@
 package com.wq.clink.dispather.box;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import com.wq.clink.dispather.box.abs.Packet;
+import com.wq.clink.dispather.box.abs.ReceivePacket;
+import com.wq.clink.dispather.box.abs.SendPacket;
 
-public class StringReceivePacket implements Closeable {
+import java.io.*;
 
-    private byte[] buffer;
-    private int positon;
-    private int length;
-    public StringReceivePacket(int len){
-        buffer = new byte[len];
-        this.length = len;
-    }
+public class StringReceivePacket extends AbsByteArrayReceivePacket<String> {
 
-    public void save(byte[] bytes, int count) {
-        System.arraycopy(bytes,0,buffer,positon,count);
-        positon += count;
-    }
-    public String string(){
-        String str = null;
-        try {
-             str = new String(buffer,"utf-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return  str;
+    private String string;
+
+    public StringReceivePacket(long len) {
+       super(len);
     }
 
     @Override
-    public void close() throws IOException {
-
+    protected String buildEntity(ByteArrayOutputStream stream) {
+        return new String(stream.toByteArray());
     }
+
+    @Override
+    public byte type() {
+        return TYPE_MEMORY_STRING;
+    }
+
 }

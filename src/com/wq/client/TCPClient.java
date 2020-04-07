@@ -3,17 +3,25 @@ package com.wq.client;
 
 import com.wq.client.bean.ServerInfo;
 import com.wq.clink.Connector;
+import com.wq.clink.dispather.box.abs.Packet;
+import com.wq.clink.dispather.box.abs.ReceivePacket;
+import com.wq.utils.Foo;
 import com.wq.utils.constants.CloseUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.UUID;
 
 public class TCPClient extends Connector {
 
-    public TCPClient(SocketChannel socket) throws IOException {
+    private final File path;
+
+    public TCPClient(SocketChannel socket,File path) throws IOException {
        setup(socket);
+       this.path = path;
     }
 
     public void exit() {
@@ -21,7 +29,7 @@ public class TCPClient extends Connector {
     }
 
 
-    public static TCPClient startWith(ServerInfo info) throws IOException {
+    public static TCPClient startWith(ServerInfo info,File path) throws IOException {
         SocketChannel socket = SocketChannel.open();
 
         socket.connect(new InetSocketAddress(Inet4Address.getByName(info.getAddress()), info.getPort()));
@@ -30,7 +38,7 @@ public class TCPClient extends Connector {
         System.out.println("客户端信息：" + socket.getLocalAddress());
         System.out.println("服务器信息：" + socket.getRemoteAddress());
         try {
-            return new TCPClient(socket);
+            return new TCPClient(socket,path);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("连接异常");
@@ -39,7 +47,21 @@ public class TCPClient extends Connector {
         return null;
     }
 
+    @Override
+    protected void onReceivePacket(ReceivePacket packet) {
+        super.onReceivePacket(packet);
+        if (packet.type() == Packet.TYPE_MEMORY_STRING){
+            String str = (String) packet.entity();
+            System.out.println(key.toString()+":"+str);
+        }
+    }
+
     public void onChannelClosed(SocketChannel channel) {
         System.out.println("链接关闭");
+    }
+
+    @Override
+    protected File createNewFile() {
+        return Foo.createRandomTemp(path);
     }
 }
