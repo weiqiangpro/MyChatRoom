@@ -47,7 +47,7 @@ public class Client {
                     String filePath = s[1];
                     File file = new File(filePath);
                     if (file.exists() && file.isFile()){
-                        FileSendPacket packet = new FileSendPacket(file);
+                        FileSendPacket packet = new FileSendPacket(file,file.getName());
                         tcpClient.send(packet);
                         continue;
                     }

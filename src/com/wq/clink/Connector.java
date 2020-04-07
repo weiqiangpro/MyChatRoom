@@ -30,17 +30,18 @@ public abstract class Connector implements Closeable {
     private SocketChannel channel;
     private Receiver receiver;
     private SendDispather sendDispather;
+
     public void setup(SocketChannel socketChannel) throws IOException {
         this.channel = socketChannel;
         Context context = Context.get();
         SocketChannelAdapter adapter = new SocketChannelAdapter(channel, context.getIoProvider());
         this.sendDispather = new SendDispather(adapter);
-        new ReceiveDispather(adapter,onArrivedAndReadNext).start();
+        new ReceiveDispather(adapter, onArrivedAndReadNext).start();
 
     }
 
     public void send(String str) {
-        StringSendPacket   stringSendPacket = new StringSendPacket(str);
+        StringSendPacket stringSendPacket = new StringSendPacket(str);
         sendDispather.send(stringSendPacket);
     }
 
@@ -53,35 +54,36 @@ public abstract class Connector implements Closeable {
 
         @Override
         public ReceivePacket<?, ?> onArrivedNewPacket(byte type, long len) {
-            switch (type){
+            switch (type) {
                 case Packet.TYPE_MEMORY_BYTES:
                     return new ByteReceivePacket(len);
                 case Packet.TYPE_MEMORY_STRING:
                     return new StringReceivePacket(len);
                 case Packet.TYPE_STREAM_FILE:
-//                case 0:
-                    return new FileReceivePacket(len,createNewFile());
+                    return new FileReceivePacket(len, createNewFile());
                 case Packet.TYPE_STREAM_DIRECT:
                     return new ByteReceivePacket(len);
                 default:
-                   throw new UnsupportedOperationException("不支持");
+                    throw new UnsupportedOperationException("不支持");
             }
         }
 
         @Override
         public void onCompleted(ReceivePacket packet) {
-
             onReceivePacket(packet);
-}
+        }
     };
 
-    protected abstract File createNewFile() ;
+    protected abstract File createNewFile();
+
+    protected abstract File createNewFile(String name);
 
     protected void onReceiveNewMessage(String str) {
         System.out.println(key.toString() + ":" + str);
     }
+
     protected void onReceivePacket(ReceivePacket packet) {
-        System.out.println(key.toString() + ":[NEW Packet] type:" +packet.type()+"Length:" +packet.getLength());
+        System.out.println(key.toString() + ":[NEW Packet] type:" + packet.type() + "Length:" + packet.getLength());
     }
 
     @Override

@@ -38,6 +38,11 @@ public class ServerHandler extends  Connector{
     }
 
     @Override
+    protected File createNewFile(String name) {
+        return Foo.createRandomTemp(path,name);
+    }
+
+    @Override
     protected void onReceivePacket(ReceivePacket packet) {
         super.onReceivePacket(packet);
         if (packet.type() == Packet.TYPE_MEMORY_STRING){

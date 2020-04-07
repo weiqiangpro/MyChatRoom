@@ -8,7 +8,6 @@ import com.wq.clink.core.frames.CancelSendFrame;
 import com.wq.clink.core.frames.SendEntityFrame;
 import com.wq.clink.core.frames.SendHeaderFrame;
 import com.wq.clink.dispather.box.abs.SendPacket;
-
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -40,7 +39,6 @@ public class AsycPacketReader implements Closeable {
                     if (abort) {
                         removeFrame(x, before);
                         if (packetFrame instanceof SendHeaderFrame) {
-                            //头枕
                             break;
                         }
                     }
@@ -109,7 +107,6 @@ public class AsycPacketReader implements Closeable {
     }
 
     IoArgs fillData() {
-
         Frame currentFrame = getCurrentFrame();
         if (currentFrame == null)
             return null;

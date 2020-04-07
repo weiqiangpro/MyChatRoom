@@ -64,4 +64,9 @@ public class TCPClient extends Connector {
     protected File createNewFile() {
         return Foo.createRandomTemp(path);
     }
+
+    @Override
+    protected File createNewFile(String name) {
+        return Foo.createRandomTemp(path,name);
+    }
 }

@@ -34,7 +34,6 @@ public class SendHeaderFrame extends AbsSendPacketFrame {
             System.arraycopy(packetHeaderInfo, 0, body, PACKET_HEADER_FRAME_MIN_LENGTH, packetHeaderInfo.length);
         }
 
-
     }
 
     @Override
