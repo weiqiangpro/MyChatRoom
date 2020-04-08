@@ -54,9 +54,9 @@ e.printStackTrace();
 
     @Override
     public void onCompleted(IoArgs args) {
-        do {
+        while (args.remained() && !isClosed.get()){
             writer.consumeIoArgs(args);
-        }while (args.remained());
+        }
         start();
     }
 

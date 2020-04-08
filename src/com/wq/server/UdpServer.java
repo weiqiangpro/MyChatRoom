@@ -79,7 +79,7 @@ public  class UdpServer {
                     }
                 }
             } catch (SocketException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {

@@ -28,16 +28,17 @@ import java.util.UUID;
 public abstract class Connector implements Closeable {
     protected UUID key = UUID.randomUUID();
     private SocketChannel channel;
-    private Receiver receiver;
+    private ReceiveDispather receiveDispather;
     private SendDispather sendDispather;
+    private SocketChannelAdapter adapter;
 
     public void setup(SocketChannel socketChannel) throws IOException {
         this.channel = socketChannel;
         Context context = Context.get();
-        SocketChannelAdapter adapter = new SocketChannelAdapter(channel, context.getIoProvider());
-        this.sendDispather = new SendDispather(adapter);
-        new ReceiveDispather(adapter, onArrivedAndReadNext).start();
-
+        adapter = new SocketChannelAdapter(channel, context.getIoProvider());
+        this.sendDispather = new SendDispather(adapter,onClose);
+        receiveDispather = new ReceiveDispather(adapter, onArrivedAndReadNext);
+        receiveDispather.start();
     }
 
     public void send(String str) {
@@ -53,7 +54,7 @@ public abstract class Connector implements Closeable {
     private final OnArrivedAndReadNext onArrivedAndReadNext = new OnArrivedAndReadNext() {
 
         @Override
-        public ReceivePacket<?, ?> onArrivedNewPacket(byte type, long len,String fileName) {
+        public ReceivePacket<?, ?> onArrivedNewPacket(byte type, long len, String fileName) {
             switch (type) {
                 case Packet.TYPE_MEMORY_BYTES:
                     return new ByteReceivePacket(len);
@@ -78,17 +79,29 @@ public abstract class Connector implements Closeable {
 
     protected abstract File createNewFile(String name);
 
-    protected void onReceiveNewMessage(String str) {
-        System.out.println(key.toString() + ":" + str);
-    }
 
     protected void onReceivePacket(ReceivePacket packet) {
         System.out.println(key.toString() + ":[NEW Packet] type:" + packet.type() + "Length:" + packet.getLength());
     }
 
+    public abstract void exit();
+
     @Override
     public void close() throws IOException {
+        receiveDispather.close();
+        sendDispather.close();
+        adapter.close();
+        channel.close();
+    }
 
+    private final OnClose onClose = new OnClose() {
+        @Override
+        public void onclose() {
+            exit();
+        }
+    };
+    public interface OnClose {
+        void onclose();
     }
 
 }

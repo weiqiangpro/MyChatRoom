@@ -22,7 +22,6 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
     private final IoProvider ioProvider;
     private IoArgsEventProcessor receiveDisCallback;
     private IoArgsEventProcessor sendDisCallback;
-    private IoArgs ioArgs;
     public SocketChannelAdapter(SocketChannel channel, IoProvider ioProvider) throws IOException {
         this.channel = channel;
         this.ioProvider = ioProvider;
@@ -34,7 +33,6 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
         if (isClosed.get()) {
             throw new IOException("Current channel is closed!");
         }
-
         return ioProvider.readRegister(channel, readCallBack);
     }
 
@@ -107,7 +105,15 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
 
     @Override
     public void close() throws IOException {
-
+        if (isClosed.compareAndSet(false, true)) {
+            // 解除注册回调
+            ioProvider.unReadRegister(channel);
+            ioProvider.unWriteRegister(channel);
+            // 关闭
+            CloseUtil.close(channel);
+            // 回调当前Channel已关闭
+//            listener.onChannelClosed(channel);
+        }
     }
 
 

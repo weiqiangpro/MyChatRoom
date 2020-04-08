@@ -1,6 +1,8 @@
 package com.wq.server;
 
+import com.wq.clink.dispather.box.abs.SendPacket;
 import com.wq.server.handle.ServerHandler;
+import com.wq.utils.constants.CloseUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TcpServer implements ServerHandler.CallBack {
 
@@ -27,16 +30,14 @@ public class TcpServer implements ServerHandler.CallBack {
         this.path = path;
     }
 
-    public boolean start(int port ) {
+    public boolean start(int port) {
         try {
             Selector selector = Selector.open();
-
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.bind(new InetSocketAddress(port));
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
             this.serverSocketChannel = serverSocketChannel;
-
             System.out.println("服务器信息：" + serverSocketChannel.getLocalAddress());
             serverListener = new ServerListener(selector);
             serverListener.start();
@@ -53,30 +54,37 @@ public class TcpServer implements ServerHandler.CallBack {
             serverListener.exit();
             serverListener = null;
         }
-        for (ServerHandler serverHandler : serverHandlerList) {
-            serverHandler.exit();
+        CloseUtil.close(serverSocketChannel);
+        synchronized (this) {
+            for (ServerHandler clientHandler : serverHandlerList) {
+                clientHandler.exit();
+            }
+            serverHandlerList.clear();
         }
-        serverHandlerList.clear();
+        executorService.shutdown();
     }
 
+    public synchronized void send(SendPacket packet) {
+        for (int i = serverHandlerList.size()-1 ; i>=0;i--){
+            serverHandlerList.get(i).send(packet);
+        }
+    }
 
     public synchronized void send(String str) {
-        for (ServerHandler serverHandler : serverHandlerList)
-            serverHandler.send(str);
+        for (int i = serverHandlerList.size()-1 ; i>=0;i--){
+            serverHandlerList.get(i).send(str);
+        }
     }
-
 
     @Override
     public void onArriveMes(ServerHandler serverHandler, String mes) {
-
-        System.out.println(serverHandler.getInfo() + mes);
         executorService.execute(() -> {
             synchronized (TcpServer.this) {
-                for (ServerHandler server : serverHandlerList) {
-                    if (server.equals(serverHandler))
-                        continue;
-                    server.send(mes);
-                }
+                for (int i = serverHandlerList.size()-1 ; i>=0;i--){
+                        if ( serverHandlerList.get(i).equals(serverHandler))
+                            continue;
+                    serverHandlerList.get(i).send(mes);
+                    }
             }
         });
     }
@@ -89,34 +97,30 @@ public class TcpServer implements ServerHandler.CallBack {
     private class ServerListener extends Thread {
         private Selector selector;
         private boolean done = false;
-
-        private ServerListener(Selector selector ) {
-        this.selector = selector;
+        ServerListener(Selector selector) {
+            this.selector = selector;
         }
-
         public void run() {
             super.run();
             System.out.println("服务器准备就绪～");
-            // 等待客户端连接
             Selector selector = this.selector;
             while (!done) {
-
                 try {
-                    if (selector.select()==0){
+                    if (selector.select() == 0) {
                         if (done)
                             break;
                         continue;
                     }
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-                    while (iterator.hasNext()){
+                    while (iterator.hasNext()) {
                         if (done)
                             break;
                         SelectionKey next = iterator.next();
                         iterator.remove();
-                        if (next.isAcceptable()){
+                        if (next.isAcceptable()) {
                             ServerSocketChannel serverSocketChannel = (ServerSocketChannel) next.channel();
                             SocketChannel socketChannel = serverSocketChannel.accept();
-                            ServerHandler clientHandler = new ServerHandler(socketChannel, TcpServer.this,path);
+                            ServerHandler clientHandler = new ServerHandler(socketChannel, TcpServer.this, path);
                             serverHandlerList.add(clientHandler);
                         }
                     }
@@ -124,15 +128,12 @@ public class TcpServer implements ServerHandler.CallBack {
                     System.out.println("TcpServer --113");
                     continue;
                 }
-                // 客户端构建异步线程
-
             }
             System.out.println("服务器已关闭！");
         }
-
         void exit() {
             done = true;
-
+            selector.wakeup();
         }
     }
 }

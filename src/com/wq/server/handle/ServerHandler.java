@@ -3,6 +3,7 @@ package com.wq.server.handle;
 import com.wq.clink.Connector;
 import com.wq.clink.dispather.box.abs.Packet;
 import com.wq.clink.dispather.box.abs.ReceivePacket;
+import com.wq.clink.dispather.box.abs.SendPacket;
 import com.wq.utils.Foo;
 import com.wq.utils.constants.CloseUtil;
 
@@ -11,7 +12,6 @@ import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 public class ServerHandler extends  Connector{
-    private SocketChannel client;
     private boolean done = false;
     private String info;
     private CallBack callBack;
@@ -21,6 +21,16 @@ public class ServerHandler extends  Connector{
         this.callBack = callBack;
             this.info = "客户端：[" + client.getRemoteAddress().toString() + "]";
         setup(client);
+    }
+
+    @Override
+    public void send(String str) {
+            super.send(str);
+    }
+
+    @Override
+    public void send(SendPacket packet) {
+        super.send(packet);
     }
 
     @Override
@@ -52,10 +62,8 @@ public class ServerHandler extends  Connector{
         }
     }
 
-
-
     public void exit() {
-        CloseUtil.close(client);
+        CloseUtil.close(this);
         callBack.onCloseSelf(ServerHandler.this);
         System.out.println( this.info+" 已退出");
     }
@@ -63,5 +71,8 @@ public class ServerHandler extends  Connector{
     public interface CallBack {
         void onArriveMes(ServerHandler serverHandler, String mes);
         void onCloseSelf(ServerHandler serverHandler);
+
     }
+
+
 }

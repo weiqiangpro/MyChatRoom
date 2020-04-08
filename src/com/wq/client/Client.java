@@ -31,6 +31,7 @@ public class Client {
                 }
             }
         }
+        Context.close();
     }
 
     private static void write(TCPClient tcpClient) throws IOException {
@@ -38,7 +39,7 @@ public class Client {
         BufferedReader input = new BufferedReader(new InputStreamReader(in));
         do {
             String str = input.readLine();
-            if ("00bye00".equalsIgnoreCase(str)) {
+            if ("00bye00".equalsIgnoreCase(str) || null == str || str.length() == 0) {
                 break;
             }
             if (str.startsWith("--f")){

@@ -1,5 +1,6 @@
 package com.wq.clink.dispather;
 
+import com.wq.clink.Connector;
 import com.wq.clink.core.IoArgs;
 import com.wq.clink.core.Sender;
 import com.wq.clink.dispather.box.StringSendPacket;
@@ -26,28 +27,22 @@ public class SendDispather implements IoArgsEventProcessor, Closeable, AsycPacke
     private final AtomicBoolean isSending = new AtomicBoolean();
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final Sender sender;
-    private final Object lock = new Object();
     private final AsycPacketReader reader = new AsycPacketReader(this);
-
-    public SendDispather(Sender sender) {
+    private final Connector.OnClose close ;
+    public SendDispather(Sender sender, Connector.OnClose onClose) {
         this.sender = sender;
+        this.close = onClose;
         sender.setSendProcessor(this);
     }
 
     public void send(SendPacket packet) {
-        synchronized (lock) {
-            queue.add(packet);
-            if (isSending.compareAndSet(false, true))
-                if (reader.requestTackPacket())
-                    requestSend();
-        }
+        queue.add(packet);
+        requestSend();
     }
 
     public void cancel(SendPacket packet) {
         boolean res;
-        synchronized (lock) {
-            res = queue.remove(packet);
-        }
+        res = queue.remove(packet);
         if (res) {
             packet.cancel();
             return;
@@ -59,35 +54,45 @@ public class SendDispather implements IoArgsEventProcessor, Closeable, AsycPacke
      * 请求网络发送
      */
     private void requestSend() {
-        try {
-            sender.senderAsync();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (isSending) {
+            if (isSending.get()) {
+                return;
+            }
+
+            if (reader.requestTackPacket()) {
+                try {
+                    boolean b = sender.senderAsync();
+                    if (b)
+                        isSending.set(true);
+                } catch (IOException e) {
+                   CloseUtil.close(this);
+                }
+            }
         }
     }
 
     @Override
     public IoArgs provideIoArgs() {
-        return reader.fillData();
+        return isClosed.get() ? null : reader.fillData();
     }
 
     @Override
     public void close() throws IOException {
         if (isClosed.compareAndSet(false, true)) {
-            isSending.set(false);
             reader.close();
+            queue.clear();
+            close.onclose();
+            synchronized (isSending) {
+                isSending.set(false);
+            }
         }
     }
 
     @Override
     public SendPacket tackPacket() {
-        SendPacket packet;
-        synchronized (lock) {
-            packet = queue.poll();
-            if (packet == null) {
-                isSending.set(false);
-                return null;
-            }
+        SendPacket packet = queue.poll();
+        if (packet == null) {
+            return null;
         }
         if (packet.isCanceled())
             return tackPacket();
@@ -96,18 +101,21 @@ public class SendDispather implements IoArgsEventProcessor, Closeable, AsycPacke
 
     @Override
     public void onFiled(IoArgs args, Exception e) {
-        if (args != null) {
-            e.printStackTrace();
-        } else {
-            //TODO
+        e.printStackTrace();
+        synchronized (isSending) {
+            isSending.set(false);
         }
+        requestSend();
     }
 
     @Override
     public void onCompleted(IoArgs args) {
-        if (reader.requestTackPacket())
-            requestSend();
+        synchronized (isSending) {
+            isSending.set(false);
+        }
+        requestSend();
     }
+
     @Override
     public void completePacket(SendPacket packet, boolean isSucceed) {
         CloseUtil.close(packet);

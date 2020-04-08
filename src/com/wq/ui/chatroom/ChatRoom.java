@@ -1,26 +1,20 @@
 package com.wq.ui.chatroom;
 
+import com.wq.client.TCPClient;
 import com.wq.ui.label.UserLabels;
 import com.wq.ui.utils.Constant;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Point;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import javax.swing.ScrollPaneConstants;
 import java.awt.event.MouseAdapter;
-import java.lang.ref.PhantomReference;
-import java.lang.ref.WeakReference;
 
 public class ChatRoom extends JFrame {
 
@@ -30,14 +24,23 @@ public class ChatRoom extends JFrame {
     private int x0, y0, x1, y1;
     private JLabel lblX;
     private JLabel lblNewLabel_2;
-
+    private final TCPClient tcpClient;
+    private JTextArea textArea;
+    private final UiAreMex uiAreMex = new UiAreMex() {
+        @Override
+        public void onArrive(String str) {
+            textArea.append(str);
+        }
+    };
     public static void main(String[] args) {
 
-        ChatRoom frame = new ChatRoom();
+        ChatRoom frame = new ChatRoom(null);
         frame.setVisible(true);
     }
 
-    public ChatRoom() {
+    public ChatRoom(TCPClient tcpClient) {
+        this.tcpClient = tcpClient;
+        tcpClient.setUiAreMex(uiAreMex);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 747, 691);
         contentPane = new JPanel();
@@ -90,7 +93,6 @@ public class ChatRoom extends JFrame {
         JTextArea textArea_1 = new JTextArea();
         textArea_1.setLineWrap(true);
         scrollPane_2.setViewportView(textArea_1);
-
         JPanel panel_1 = new JPanel();
 
         panel_1.setBounds(130, 95, 619, 441);
@@ -101,11 +103,30 @@ public class ChatRoom extends JFrame {
         scrollPane_1.setBorder(null);
         panel_1.add(scrollPane_1, BorderLayout.CENTER);
 
-        JTextArea textArea = new JTextArea();
+         textArea = new JTextArea();
         textArea.setWrapStyleWord(true);
-        textArea.setEnabled(false);
-        scrollPane_1.setViewportView(textArea);
+//        textArea.setEnabled(false);
+        textArea.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        textArea.setForeground(Color.BLACK);
 
+        scrollPane_1.setViewportView(textArea);
+        scrollPane_1.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane_1.setBorder(null);
+        KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+        textArea_1.getInputMap().put(enter, "none");
+        textArea_1.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == 10) {
+                    String text = textArea_1.getText();
+                    if (text==null || text.length()==0)
+                        return;
+                    textArea.append("你说:  "+text+"\n");
+                    textArea_1.setText("");
+                    tcpClient.send(text);
+                }
+            }
+        });
         JPanel panel_2 = new JPanel();
         panel_2.setBorder(new LineBorder(Color.gray));
         panel_2.setBackground(Color.WHITE);
@@ -134,6 +155,30 @@ public class ChatRoom extends JFrame {
         send.setFont(new Font("微软雅黑", Font.PLAIN, 13));
         send.setForeground(Color.WHITE);
         send.setBounds(540, 0, 64, 27);
+        send.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent arg0) {
+                String text = textArea_1.getText();
+                if (text==null || text.length()==0)
+                    return;
+                textArea.append("你说:  "+text+"\n");
+                textArea_1.setText("");
+                tcpClient.send(text);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // TODO Auto-generated method stub
+//                ChatRoom.this.lblNewLabel_2.setFont(new Font("微软雅黑", Font.PLAIN, 23));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // TODO Auto-generated method stub
+//                ChatRoom.this.lblNewLabel_2.setFont(new Font("微软雅黑", Font.PLAIN, 18));
+            }
+
+        });
         panel_4.add(send);
         ImageIcon img = new ImageIcon(Constant.class.getResource("bgc.jpg"));
 

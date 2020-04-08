@@ -3,8 +3,10 @@ package com.wq.client;
 
 import com.wq.client.bean.ServerInfo;
 import com.wq.clink.Connector;
+import com.wq.clink.Context;
 import com.wq.clink.dispather.box.abs.Packet;
 import com.wq.clink.dispather.box.abs.ReceivePacket;
+import com.wq.ui.chatroom.UiAreMex;
 import com.wq.utils.Foo;
 import com.wq.utils.constants.CloseUtil;
 
@@ -18,11 +20,16 @@ import java.util.UUID;
 public class TCPClient extends Connector {
 
     private final File path;
-
+    private UiAreMex uiAreMex;
     public TCPClient(SocketChannel socket,File path) throws IOException {
        setup(socket);
        this.path = path;
     }
+
+    public void setUiAreMex(UiAreMex uiAreMex) {
+        this.uiAreMex = uiAreMex;
+    }
+
 
     public void exit() {
         CloseUtil.close(this);
@@ -49,11 +56,15 @@ public class TCPClient extends Connector {
 
     @Override
     protected void onReceivePacket(ReceivePacket packet) {
-        super.onReceivePacket(packet);
+        //super.onReceivePacket(packet);
         if (packet.type() == Packet.TYPE_MEMORY_STRING){
             String str = (String) packet.entity();
-            System.out.println(key.toString()+":"+str);
+            uiAreMex.onArrive(key.toString()+":"+str+"\n");
+//            System.out.println(key.toString()+":"+str);
+        }else {
+            uiAreMex.onArrive("收到新文件\n");
         }
+
     }
 
     public void onChannelClosed(SocketChannel channel) {

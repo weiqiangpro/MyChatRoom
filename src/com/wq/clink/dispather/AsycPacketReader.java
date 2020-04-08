@@ -91,7 +91,10 @@ public class AsycPacketReader implements Closeable {
                 SendPacket packet = ((AbsSendPacketFrame) frame).getPacket();
                 provider.completePacket(packet, false);
             }
+            node = node.next;
         }
+
+
         nodeSize = 0;
         node = null;
     }

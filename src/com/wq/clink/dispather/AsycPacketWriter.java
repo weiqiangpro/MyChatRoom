@@ -4,8 +4,6 @@ import com.wq.clink.core.Frame;
 import com.wq.clink.core.IoArgs;
 import com.wq.clink.core.frames.*;
 import com.wq.clink.dispather.box.abs.ReceivePacket;
-import com.wq.clink.dispather.box.abs.SendPacket;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.Channels;
@@ -112,6 +110,8 @@ public class AsycPacketWriter implements Closeable {
             short identifier = frame.getBodyIndetifier();
             int length = frame.getBodyLength();
             PacketModel model = packetMap.get(identifier);
+            if (model == null)
+                return;
             model.unreceivedLength -= length;
             if (model.unreceivedLength <= 0) {
                 provider.completePacket(model.packet, true);
@@ -119,7 +119,6 @@ public class AsycPacketWriter implements Closeable {
             }
         }
     }
-
 
     /**
      * 添加一个新的Packet到当前缓冲区
